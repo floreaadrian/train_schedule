@@ -34,43 +34,92 @@ void readOldFromFile(String path) async {
   final List<Train> trains = [];
   final date = DateTime.now();
   final String company = getCompanyFromFilename(path);
+  final String source = '41092';
+  final String destination = '32015';
   for (final route in decodedData) {
-    if (checkTrainHasRoute(route, '41092', '32015')) {
+    if (checkTrainHasRoute(route, source, destination)) {
       if (checkTrainTime(route, date)) {
-        trains.add(parseTrainFromMap(route, company));
+        final Train trainParsed = parseTrainFromMap(
+          route,
+          company,
+          source,
+          DateTime.now(),
+        );
+        if (trainParsed != null) {
+          trains.add(trainParsed);
+        } else {
+          print('ok');
+        }
       }
     }
   }
   print(trains);
 }
 
-Train parseTrainFromMap(Map<String, dynamic> mapTrain, final company) {
+Train parseTrainFromMap(
+  Map<String, dynamic> mapTrain,
+  String company,
+  String source,
+  DateTime date,
+) {
   final id = mapTrain['id'];
   final category = mapTrain['categorie'];
-  final List<Stop> stops = parseStops(
+  final Map<String, dynamic> parseResult = parseStops(
     mapTrain['traseu']['traseu'] as List<dynamic>,
+    source,
   );
-  return Train(id, stops, company, category);
+  final bool shouldSubstractOne = parseResult['shouldSubstractOne'];
+  final DateTime timeToCheck =
+      shouldSubstractOne ? date.subtract(Duration(days: 1)) : date;
+  final List<Stop> stops = parseResult['stops'];
+  return checkTrainTime(mapTrain, timeToCheck)
+      ? Train(id, stops, company, category)
+      : null;
 }
 
-List<Stop> parseStops(List<dynamic> mapTraseu) {
+int calculateSeconsdFromString(String hourMinutes) {
+  final hour = int.parse(hourMinutes.split(':')[0]);
+  final minute = int.parse(hourMinutes.split(':')[1]);
+  return hour * 3600 + minute * 60;
+}
+
+Map<String, dynamic> parseStops(List<dynamic> mapTraseu, String source) {
   final List<Stop> stops = [];
+  bool shouldSubstractOne = false;
+  bool isOverNight = false;
+  bool foundSource = false;
   for (int i = 0; i < mapTraseu.length; ++i) {
-    if (i != 0) {
-      //check date
+    if (mapTraseu[i]['stationId'] == source) {
+      foundSource = true;
     }
-    final distanta = mapTraseu[i]['distanta'] as double;
-    final stationId = mapTraseu[i]['statieInitiala'] as String;
     final timeStart =
         parseTime(mapTraseu[i]['oraPornire'] as Map<String, dynamic>);
     final timeArriveNext =
         parseTime(mapTraseu[i]['oraSosire'] as Map<String, dynamic>);
+    final firstTime = calculateSeconsdFromString(timeStart);
+    final secondTime = calculateSeconsdFromString(timeArriveNext);
+    final stationId = mapTraseu[i]['statieInitiala'] as String;
+    if (secondTime < firstTime) {
+      print('*' * 20);
+      print(stationId);
+      print(timeStart);
+      print(timeArriveNext);
+      print('*' * 20);
+      isOverNight = true;
+    }
+    if (isOverNight && foundSource) {
+      shouldSubstractOne = true;
+    }
+    final distanta = mapTraseu[i]['distanta'] as double;
     final vitezaLivret = mapTraseu[i]['vitezaLivret'] as int;
     final Stop stop =
         Stop(stationId, timeStart, timeArriveNext, vitezaLivret, distanta);
     stops.add(stop);
   }
-  return stops;
+  if (isOverNight) {
+    print('ok');
+  }
+  return {'shouldSubstractOne': shouldSubstractOne, 'stops': stops};
 }
 
 String parseTime(Map<String, dynamic> mapTime) {

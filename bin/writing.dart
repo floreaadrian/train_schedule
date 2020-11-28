@@ -15,11 +15,11 @@ Future<File> _localFile(String filename) async {
   }
 }
 
-Future<File> writeCounter(Map<String, dynamic> data, String fileName) async {
+Future<File> writeCounter(dynamic data, String fileName) async {
   final file = await _localFile(fileName);
   return file.writeAsString(
     jsonEncode(data, toEncodable: _myEncode),
-    mode: FileMode.write,
+    mode: FileMode.append,
   );
 }
 

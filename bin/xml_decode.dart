@@ -4,7 +4,7 @@ import 'package:xml/xml.dart';
 
 import 'writing.dart';
 
-Future<List<String>> decode(String path) async {
+void decode(String path) async {
   final file = File('res/xml/${path}.xml');
   final document = XmlDocument.parse(file.readAsStringSync());
   final trains = document.findAllElements('Tren');
@@ -25,7 +25,17 @@ Future<List<String>> decode(String path) async {
   // print(allStations);
   await writeCounter(allStations, 'graph/$path');
   await writeCounter(allTrainDetails, 'trains/$path');
-  return [];
+}
+
+void oldDecode(String path) async {
+  final file = File('res/xml/${path}.xml');
+  final document = XmlDocument.parse(file.readAsStringSync());
+  final trains = document.findAllElements('Tren');
+  final List dataToWrite = [];
+  for (final train in trains) {
+    dataToWrite.add(decodeTren(train));
+  }
+  await writeCounter(dataToWrite, path);
 }
 
 Map<String, dynamic> _getTrainDetails(XmlElement tren) {
@@ -125,8 +135,8 @@ double parseDistanta(String distanta) {
 
 Map<String, dynamic> parseTime(String timestamp) {
   final intTimestamp = int.parse(timestamp);
-  final hours = (intTimestamp / 3600).round();
-  final minutes = ((intTimestamp / 60) % 60).round();
+  final hours = (intTimestamp / 3600).floor();
+  final minutes = ((intTimestamp / 60) % 60).floor();
   return {
     'hours': hours,
     'minutes': minutes,
