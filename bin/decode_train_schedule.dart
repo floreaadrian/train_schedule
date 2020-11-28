@@ -1,4 +1,5 @@
 import 'readAndSearch/read.dart';
+import 'xml_decode.dart';
 
 void main(List<String> arguments) async {
   final paths = [
@@ -10,6 +11,6 @@ void main(List<String> arguments) async {
     'mers-trensntfc2019-2020',
     'mers-trentransferoviar-calatori-2019-2020',
   ];
+  // paths.forEach((element) => decode(element));
   paths.forEach((element) => readFromFile(element));
-  // readFromFile(paths[0]);
 }

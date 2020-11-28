@@ -8,11 +8,51 @@ Future<List<String>> decode(String path) async {
   final file = File('res/xml/${path}.xml');
   final document = XmlDocument.parse(file.readAsStringSync());
   final trains = document.findAllElements('Tren');
+  final Map<String, dynamic> allStations = {};
   for (final train in trains) {
-    final result = decodeTren(train);
-    await writeCounter(result, path);
+    final result = _decodeAsUnderictedGraph(train);
+    for (final station in result.keys) {
+      if (allStations.containsKey(station)) {
+        allStations[station].addAll(result[station]);
+      } else {
+        allStations[station] = result[station];
+      }
+    }
   }
+  // print(allStations);
+  await writeCounter(allStations, path);
   return [];
+}
+
+Map<String, List<dynamic>> _decodeAsUnderictedGraph(XmlElement tren) {
+  final traseu =
+      tren.findAllElements('Trasa').first.findAllElements('ElementTrasa');
+  final Map<String, List<dynamic>> nodes = {};
+  traseu.forEach((element) {
+    final trainId = elementAttributeValue(tren, 'Numar');
+    final codStatieOrigine = elementAttributeValue(element, 'CodStaOrigine');
+    // if (codStatieOrigine == '41092') {
+    final vertexFound = createVertexFromNode(element, trainId);
+    if (nodes.containsKey(codStatieOrigine)) {
+      nodes[codStatieOrigine].add(vertexFound);
+    } else {
+      nodes[codStatieOrigine] = [vertexFound];
+    }
+    // }
+  });
+  return nodes;
+}
+
+Map<String, dynamic> createVertexFromNode(XmlElement traseu, String trainId) {
+  final Map<String, dynamic> vertex = {};
+  vertex['trainId'] = trainId;
+  vertex['statieFinala'] = elementAttributeValue(traseu, 'CodStaDest');
+  vertex['distanta'] = parseDistanta(elementAttributeValue(traseu, 'Km'));
+  vertex['oraPornire'] = parseTime(elementAttributeValue(traseu, 'OraP'));
+  vertex['oraSosire'] = parseTime(elementAttributeValue(traseu, 'OraS'));
+  vertex['vitezaLivret'] =
+      int.parse(elementAttributeValue(traseu, 'VitezaLivret'));
+  return vertex;
 }
 
 Map<String, dynamic> decodeTren(XmlElement tren) {

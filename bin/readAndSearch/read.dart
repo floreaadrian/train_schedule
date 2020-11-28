@@ -1,23 +1,58 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:equatable/equatable.dart';
+
 Future<File> _localFile(String filename) async {
-  return File('${Directory.current.path}/res/output/${filename}.json');
+  return File('${Directory.current.path}/res/output/graph/${filename}.json');
 }
 
 void readFromFile(String path) async {
   final dataFromFile = (await _localFile(path)).readAsStringSync();
-  final decodedData = jsonDecode(dataFromFile) as List;
-  final trains = [];
-  final date = DateTime.now();
-  for (final route in decodedData) {
-    if (checkTrainHasRoute(route, '41092', '32015')) {
-      if (checkTrainTime(route, date)) {
-        trains.add(route['id']);
+  final decodedData = jsonDecode(dataFromFile);
+  final List<List<StationTrain>> allPaths = bfs(decodedData, '41092', '41195');
+  allPaths.forEach((element) {
+    print('${element.first} - ${element.last}');
+  });
+}
+
+List<List<StationTrain>> bfs(
+    Map<String, dynamic> trains, String originNode, String destNode) {
+  if (trains.containsKey(originNode)) {
+    final Queue<List<StationTrain>> queue = Queue();
+    final Set<StationTrain> visited = {};
+    final List<List<StationTrain>> allPaths = [];
+    for (final node in trains[originNode]) {
+      final StationTrain firstNode = StationTrain(originNode, node['trainId']);
+      visited.add(firstNode);
+      queue.addFirst([firstNode]);
+    }
+    while (queue.isNotEmpty) {
+      final List quePaths = queue.removeFirst();
+      StationTrain last = quePaths.last;
+      if (last.stationId == destNode) {
+        final List<StationTrain> newListToCoppy = [...quePaths];
+        allPaths.add(newListToCoppy);
+      }
+      if (trains.containsKey(last.stationId)) {
+        final trainsFromStation = trains[last.stationId] as List;
+        for (final train in trainsFromStation) {
+          final StationTrain newStationTrain =
+              StationTrain(train['statieFinala'], train['trainId']);
+          if (!visited.contains(newStationTrain) &&
+              train['trainId'] == last.trainId) {
+            final List<StationTrain> newPath = [...quePaths];
+            newPath.add(newStationTrain);
+            visited.add(newStationTrain);
+            queue.addFirst(newPath);
+          }
+        }
       }
     }
+    return allPaths;
   }
-  print(trains);
+  return [];
 }
 
 bool checkTrainTime(Map<String, dynamic> train, DateTime date) {
@@ -32,20 +67,15 @@ bool checkTrainTime(Map<String, dynamic> train, DateTime date) {
   return false;
 }
 
-bool checkTrainHasRoute(
-  Map<String, dynamic> train,
-  String originCode,
-  String destCode,
-) {
-  final traseu = train['traseu']['traseu'] as List;
-  bool findOrigin = false;
-  for (final oprire in traseu) {
-    if (oprire['statieInitiala'] == originCode) {
-      findOrigin = true;
-    }
-    if (oprire['statieFinala'] == destCode && findOrigin) {
-      return true;
-    }
-  }
-  return false;
+class StationTrain extends Equatable {
+  final String stationId;
+  final String trainId;
+
+  StationTrain(this.stationId, this.trainId);
+
+  @override
+  List<Object> get props => [stationId, trainId];
+
+  @override
+  bool get stringify => true;
 }
