@@ -34,7 +34,7 @@ void readOldFromFile(String path) async {
   final List<Train> trains = [];
   final date = DateTime.now();
   final String company = getCompanyFromFilename(path);
-  final String source = '41092';
+  final String source = '41054';
   final String destination = '32015';
   for (final route in decodedData) {
     if (checkTrainHasRoute(route, source, destination)) {
@@ -53,7 +53,7 @@ void readOldFromFile(String path) async {
       }
     }
   }
-  print(trains);
+  // print(trains);
 }
 
 Train parseTrainFromMap(
@@ -89,7 +89,8 @@ Map<String, dynamic> parseStops(List<dynamic> mapTraseu, String source) {
   bool isOverNight = false;
   bool foundSource = false;
   for (int i = 0; i < mapTraseu.length; ++i) {
-    if (mapTraseu[i]['stationId'] == source) {
+    final stationId = mapTraseu[i]['statieInitiala'] as String;
+    if (stationId == source) {
       foundSource = true;
     }
     final timeStart =
@@ -98,16 +99,10 @@ Map<String, dynamic> parseStops(List<dynamic> mapTraseu, String source) {
         parseTime(mapTraseu[i]['oraSosire'] as Map<String, dynamic>);
     final firstTime = calculateSeconsdFromString(timeStart);
     final secondTime = calculateSeconsdFromString(timeArriveNext);
-    final stationId = mapTraseu[i]['statieInitiala'] as String;
     if (secondTime < firstTime) {
-      print('*' * 20);
-      print(stationId);
-      print(timeStart);
-      print(timeArriveNext);
-      print('*' * 20);
       isOverNight = true;
     }
-    if (isOverNight && foundSource) {
+    if (isOverNight && !foundSource) {
       shouldSubstractOne = true;
     }
     final distanta = mapTraseu[i]['distanta'] as double;
@@ -115,9 +110,6 @@ Map<String, dynamic> parseStops(List<dynamic> mapTraseu, String source) {
     final Stop stop =
         Stop(stationId, timeStart, timeArriveNext, vitezaLivret, distanta);
     stops.add(stop);
-  }
-  if (isOverNight) {
-    print('ok');
   }
   return {'shouldSubstractOne': shouldSubstractOne, 'stops': stops};
 }

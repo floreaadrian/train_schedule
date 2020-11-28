@@ -19,7 +19,7 @@ Future<File> writeCounter(dynamic data, String fileName) async {
   final file = await _localFile(fileName);
   return file.writeAsString(
     jsonEncode(data, toEncodable: _myEncode),
-    mode: FileMode.append,
+    mode: FileMode.write,
   );
 }
 

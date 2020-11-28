@@ -135,7 +135,7 @@ double parseDistanta(String distanta) {
 
 Map<String, dynamic> parseTime(String timestamp) {
   final intTimestamp = int.parse(timestamp);
-  final hours = (intTimestamp / 3600).floor();
+  final hours = (intTimestamp / 3600).floor() % 24;
   final minutes = ((intTimestamp / 60) % 60).floor();
   return {
     'hours': hours,
