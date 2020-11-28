@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 
 Future<File> _createFile(String filename) {
-  return File('${Directory.current.path}/res/output/graph/${filename}.json')
+  return File('${Directory.current.path}/res/output/${filename}.json')
       .create(recursive: true);
 }
 
 Future<File> _localFile(String filename) async {
-  if (File('${Directory.current.path}/res/output/graph/${filename}.json')
+  if (File('${Directory.current.path}/res/output/${filename}.json')
       .existsSync()) {
-    return File('${Directory.current.path}/res/output/graph/${filename}.json');
+    return File('${Directory.current.path}/res/output/${filename}.json');
   } else {
     return _createFile(filename);
   }
@@ -19,7 +19,7 @@ Future<File> writeCounter(Map<String, dynamic> data, String fileName) async {
   final file = await _localFile(fileName);
   return file.writeAsString(
     jsonEncode(data, toEncodable: _myEncode),
-    mode: FileMode.append,
+    mode: FileMode.write,
   );
 }
 

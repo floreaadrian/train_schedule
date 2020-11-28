@@ -11,6 +11,6 @@ void main(List<String> arguments) async {
     'mers-trensntfc2019-2020',
     'mers-trentransferoviar-calatori-2019-2020',
   ];
-  // paths.forEach((element) => decode(element));
-  paths.forEach((element) => readFromFile(element));
+  paths.forEach((element) => decode(element));
+  // paths.forEach((element) => readFromFile(element));
 }

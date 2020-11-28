@@ -9,8 +9,11 @@ Future<List<String>> decode(String path) async {
   final document = XmlDocument.parse(file.readAsStringSync());
   final trains = document.findAllElements('Tren');
   final Map<String, dynamic> allStations = {};
+  final Map<String, dynamic> allTrainDetails = {};
   for (final train in trains) {
     final result = _decodeAsUnderictedGraph(train);
+    final trainDetails = _getTrainDetails(train);
+    allTrainDetails.addAll(trainDetails);
     for (final station in result.keys) {
       if (allStations.containsKey(station)) {
         allStations[station].addAll(result[station]);
@@ -20,8 +23,22 @@ Future<List<String>> decode(String path) async {
     }
   }
   // print(allStations);
-  await writeCounter(allStations, path);
+  await writeCounter(allStations, 'graph/$path');
+  await writeCounter(allTrainDetails, 'trains/$path');
   return [];
+}
+
+Map<String, dynamic> _getTrainDetails(XmlElement tren) {
+  final trainId = elementAttributeValue(tren, 'Numar');
+  final categorie = elementAttributeValue(tren, 'CategorieTren');
+  final restrictii =
+      decodeRestrictii(tren.findAllElements('RestrictiiTren').first);
+  return {
+    trainId: {
+      'categorie': categorie,
+      'restrictii': restrictii,
+    }
+  };
 }
 
 Map<String, List<dynamic>> _decodeAsUnderictedGraph(XmlElement tren) {
