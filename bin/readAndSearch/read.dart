@@ -5,28 +5,44 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 
 Future<File> _localFile(String filename) async {
-  return File('${Directory.current.path}/res/output/graph/${filename}.json');
+  return File('${Directory.current.path}/res/output/${filename}.json');
 }
 
 void readFromFile(String path) async {
-  final dataFromFile = (await _localFile(path)).readAsStringSync();
+  final dataFromFile = (await _localFile('graph/$path')).readAsStringSync();
+  final trainDetailsFromFile =
+      (await _localFile('trains/$path')).readAsStringSync();
   final decodedData = jsonDecode(dataFromFile);
-  final List<List<StationTrain>> allPaths = bfs(decodedData, '41092', '41195');
+  final trainDetails = jsonDecode(trainDetailsFromFile);
+  final List<List<StationTrain>> allPaths = bfs(
+    decodedData,
+    '41092',
+    '41195',
+    trainDetails,
+    DateTime.now(),
+  );
   allPaths.forEach((element) {
     print('${element.first} - ${element.last}');
   });
 }
 
 List<List<StationTrain>> bfs(
-    Map<String, dynamic> trains, String originNode, String destNode) {
+  Map<String, dynamic> trains,
+  String originNode,
+  String destNode,
+  Map<String, dynamic> trainDetails,
+  DateTime date,
+) {
   if (trains.containsKey(originNode)) {
     final Queue<List<StationTrain>> queue = Queue();
     final Set<StationTrain> visited = {};
     final List<List<StationTrain>> allPaths = [];
     for (final node in trains[originNode]) {
       final StationTrain firstNode = StationTrain(originNode, node['trainId']);
-      visited.add(firstNode);
-      queue.addFirst([firstNode]);
+      if (checkTrainTime(trainDetails[node['trainId']], date)) {
+        visited.add(firstNode);
+        queue.addFirst([firstNode]);
+      }
     }
     while (queue.isNotEmpty) {
       final List quePaths = queue.removeFirst();
