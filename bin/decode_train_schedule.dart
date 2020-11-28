@@ -1,3 +1,4 @@
+import 'readAndSearch/old_search.dart';
 import 'readAndSearch/read.dart';
 import 'xml_decode.dart';
 
@@ -12,5 +13,5 @@ void main(List<String> arguments) async {
     'mers-trentransferoviar-calatori-2019-2020',
   ];
   // paths.forEach((element) => decode(element));
-  paths.forEach((element) => readFromFile(element));
+  paths.forEach((element) => readOldFromFile(element));
 }
